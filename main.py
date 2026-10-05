@@ -1,33 +1,32 @@
 import sqlite3
 import jwt
+import bcrypt
 from datetime import datetime, timedelta
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from passlib.context import CryptContext
-from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 app = FastAPI()
 
+# Enable CORS for Frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Har frontend website/app ko access allow karega
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Security Settings
 SECRET_KEY = "my_super_secret_pocket_novel_key_123"
 ALGORITHM = "HS256"
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 # 1. Database Initialization
 def init_db():
     conn = sqlite3.connect("pocket_novel.db")
     cursor = conn.cursor()
-    
+
     # Users Table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
@@ -38,7 +37,7 @@ def init_db():
             coins INTEGER DEFAULT 100
         )
     ''')
-    
+
     # Novels Table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS novels (
@@ -48,7 +47,7 @@ def init_db():
             genre TEXT
         )
     ''')
-    
+
     # Chapters Table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS chapters (
@@ -61,7 +60,7 @@ def init_db():
             coin_price INTEGER DEFAULT 10
         )
     ''')
-    
+
     # Unlocked Chapters Tracker
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS unlocked_chapters (
@@ -71,7 +70,7 @@ def init_db():
             UNIQUE(user_id, chapter_id)
         )
     ''')
-    
+
     conn.commit()
     conn.close()
 
@@ -108,12 +107,14 @@ class RechargeSchema(BaseModel):
     coins_to_add: int
 
 
-# Security Helpers
+# Security Helpers (Pure Bcrypt Implementation)
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    pwd_bytes = password.encode('utf-8')
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(pwd_bytes, salt).decode('utf-8')
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
 
 def create_access_token(data: dict) -> str:
     to_encode = data.copy()
@@ -153,10 +154,10 @@ def login(user: LoginSchema):
     cursor.execute("SELECT id, username, hashed_password, coins FROM users WHERE username = ?", (user.username,))
     db_user = cursor.fetchone()
     conn.close()
-    
+
     if not db_user or not verify_password(user.password, db_user[2]):
         raise HTTPException(status_code=401, detail="Invalid username or password")
-    
+
     token = create_access_token({"user_id": db_user[0], "username": db_user[1]})
     return {
         "status": "success",
@@ -179,10 +180,10 @@ def get_user_profile(user_id: int):
     cursor.execute("SELECT id, username, email, coins FROM users WHERE id = ?", (user_id,))
     user = cursor.fetchone()
     conn.close()
-    
+
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-        
+
     return {
         "status": "success",
         "profile": {
@@ -197,23 +198,23 @@ def get_user_profile(user_id: int):
 def recharge_wallet(data: RechargeSchema):
     if data.coins_to_add <= 0:
         raise HTTPException(status_code=400, detail="Coin amount must be greater than 0")
-        
+
     conn = sqlite3.connect("pocket_novel.db")
     cursor = conn.cursor()
-    
+
     cursor.execute("SELECT coins FROM users WHERE id = ?", (data.user_id,))
     user = cursor.fetchone()
     if not user:
         conn.close()
         raise HTTPException(status_code=404, detail="User not found")
-        
+
     current_coins = user[0]
     new_balance = current_coins + data.coins_to_add
-    
+
     cursor.execute("UPDATE users SET coins = ? WHERE id = ?", (new_balance, data.user_id))
     conn.commit()
     conn.close()
-    
+
     return {
         "status": "success",
         "message": f"Successfully added {data.coins_to_add} coins to wallet!",
@@ -239,18 +240,18 @@ def publish_novel(novel: NovelSchema):
 def add_chapter(chapter: ChapterSchema):
     conn = sqlite3.connect("pocket_novel.db")
     cursor = conn.cursor()
-    
+
     is_locked = 0 if chapter.chapter_number <= 2 else 1
-    
+
     cursor.execute('''
         INSERT INTO chapters (novel_id, chapter_number, chapter_title, content, is_locked, coin_price)
         VALUES (?, ?, ?, ?, ?, 10)
     ''', (chapter.novel_id, chapter.chapter_number, chapter.chapter_title, chapter.content, is_locked))
-    
+
     conn.commit()
     chapter_id = cursor.lastrowid
     conn.close()
-    
+
     lock_status = "LOCKED (Requires 10 coins)" if is_locked == 1 else "FREE"
     return {
         "status": "success", 
@@ -264,32 +265,32 @@ def add_chapter(chapter: ChapterSchema):
 def unlock_chapter(data: UnlockSchema):
     conn = sqlite3.connect("pocket_novel.db")
     cursor = conn.cursor()
-    
+
     cursor.execute("SELECT coins FROM users WHERE id = ?", (data.user_id,))
     user = cursor.fetchone()
     if not user:
         conn.close()
         raise HTTPException(status_code=404, detail="User not found")
-        
+
     user_coins = user[0]
-    
+
     cursor.execute("SELECT coin_price, is_locked FROM chapters WHERE id = ?", (data.chapter_id,))
     chapter = cursor.fetchone()
     if not chapter:
         conn.close()
         raise HTTPException(status_code=404, detail="Chapter not found")
-        
+
     coin_price = chapter[0]
-    
+
     if user_coins < coin_price:
         conn.close()
         raise HTTPException(status_code=400, detail="Insufficient coins! Please recharge your wallet.")
-    
+
     try:
         new_balance = user_coins - coin_price
         cursor.execute("UPDATE users SET coins = ? WHERE id = ?", (new_balance, data.user_id))
         cursor.execute("INSERT INTO unlocked_chapters (user_id, chapter_id) VALUES (?, ?)", (data.user_id, data.chapter_id))
-        
+
         conn.commit()
         conn.close()
         return {
@@ -325,7 +326,6 @@ def get_novel_chapters(novel_id: int):
     ''', (novel_id,))
     rows = cursor.fetchall()
     conn.close()
-    
     chapters_list = [{
         "chapter_id": r[0], 
         "chapter_number": r[1], 
@@ -341,13 +341,12 @@ def read_chapter(chapter_id: int, user_id: int = 0):
     cursor = conn.cursor()
     cursor.execute("SELECT chapter_number, chapter_title, content, is_locked FROM chapters WHERE id = ?", (chapter_id,))
     row = cursor.fetchone()
-    
+
     if not row:
         conn.close()
         return {"status": "error", "message": "Chapter not found"}
-        
+
     chapter_number, chapter_title, content, is_locked = row
-    
     if is_locked == 0:
         conn.close()
         return {
@@ -357,11 +356,11 @@ def read_chapter(chapter_id: int, user_id: int = 0):
             "content": content,
             "access": "FREE"
         }
-    
+
     cursor.execute("SELECT id FROM unlocked_chapters WHERE user_id = ? AND chapter_id = ?", (user_id, chapter_id))
     unlocked = cursor.fetchone()
     conn.close()
-    
+
     if unlocked:
         return {
             "status": "success",
