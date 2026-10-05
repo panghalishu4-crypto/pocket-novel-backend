@@ -1,0 +1,11 @@
+# Ignore all python files by default
+*.py
+*.db
+
+# Except main.py (Aapki main backend file)
+!main.py
+
+# Ignore caches and environments
+__pycache__/
+.venv/
+.vscode/
