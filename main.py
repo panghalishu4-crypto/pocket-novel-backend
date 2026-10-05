@@ -7,6 +7,14 @@ from passlib.context import CryptContext
 
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Har frontend website/app ko access allow karega
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Security Settings
 SECRET_KEY = "my_super_secret_pocket_novel_key_123"
 ALGORITHM = "HS256"
