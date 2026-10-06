@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+</head>
+<!-- Quill Rich Text Editor CSS CDN -->
+<link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pocket Novel - Dashboard</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
+
+    * { box-sizing: border-box; font-family: 'Poppins', sans-serif; margin: 0; padding: 0; }
+
+    body { 
+      background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #1a0b2e); 
+      background-size: 400% 400%;
+      animation: gradientBG 12s ease infinite;
+      color: #ffffff; min-height: 100vh; padding-bottom: 90px;
+    }
+
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .header {
+      background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 16px 24px; position: sticky; top: 0; z-index: 100;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    .brand {
+  font-size: 22px;
+  font-weight: 800;
+  background: linear-gradient(45deg, #ff007f, #7928ca, #00dfd8);
+  /* Standard property pehle likhein, phir vendor prefix */
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+    .coins-badge { 
+      background: linear-gradient(135deg, #ff9a9e, #fecfef); color: #2d0b31; 
+      padding: 6px 14px; border-radius: 30px; font-weight: 800; font-size: 14px; 
+    }
+
+    .content-container { max-width: 900px; margin: 20px auto; padding: 0 15px; }
+
+    .tab-content { display: none; animation: fadeIn 0.4s ease-in-out; }
+    .tab-content.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .novels-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+    
+    .novel-card {
+      background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px; overflow: hidden; transition: all 0.3s ease; position: relative;
+    }
+
+    .novel-card:hover { transform: translateY(-8px); box-shadow: 0 12px 30px rgba(114, 9, 183, 0.5); }
+
+    .novel-thumbnail { width: 100%; height: 250px; object-fit: cover; }
+
+    .novel-details { padding: 15px; position: relative; }
+    .novel-title { font-size: 16px; font-weight: 700; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .novel-meta { font-size: 12px; color: #b8c1ec; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+
+    /* Action Icons (Like & Bookmark) */
+    .card-actions {
+      display: flex; gap: 8px; margin-bottom: 10px; font-size: 13px; color: #ff007f;
+    }
+    .action-badge {
+      background: rgba(255,255,255,0.08); padding: 4px 8px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: background 0.2s;
+    }
+    .action-badge:hover { background: rgba(255,255,255,0.2); }
+
+    .view-btn {
+      width: 100%; background: linear-gradient(135deg, #ff007f, #7928ca);
+      color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .view-btn:active { transform: scale(0.98); }
+
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; font-size: 14px; margin-bottom: 6px; color: #ff007f; font-weight: 600; }
+    .form-control {
+      width: 100%; padding: 12px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px; color: white; font-size: 14px;
+    }
+    .form-control option { background: #1a0b2e; color: white; }
+    .form-control:focus { outline: none; border-color: #00dfd8; }
+
+    .reward-card {
+      background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 15px; border-radius: 12px; margin-bottom: 12px; display: flex;
+      justify-content: space-between; align-items: center;
+    }
+    .reward-btn {
+      background: linear-gradient(135deg, #11998e, #38ef7d); border: none;
+      color: #000; font-weight: 700; padding: 8px 16px; border-radius: 8px; cursor: pointer;
+    }
+
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: rgba(15, 12, 41, 0.92); backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      display: flex; justify-content: space-around; padding: 12px 0; z-index: 1000;
+    }
+
+    .nav-item {
+      display: flex; flex-direction: column; align-items: center; color: #8a8a8a;
+      font-size: 11px; text-decoration: none; cursor: pointer; transition: all 0.3s ease;
+    }
+
+    .nav-item .icon { font-size: 20px; margin-bottom: 3px; }
+    .nav-item.active { color: #00dfd8; transform: translateY(-2px); }
+    .nav-item.active .icon { filter: drop-shadow(0 0 8px #00dfd8); }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="brand">✨ Pocket Novel</div>
+    <div class="coins-badge">🪙 <span id="coins-display">0</span> Coins</div>
+  </div>
+
+  <div class="content-container">
+
+    <!-- 1. READING TAB -->
+    <div id="reading-tab" class="tab-content active">
+      <h2 style="margin-bottom: 15px;">📖 Explore & Read</h2>
+      <div id="novels-list" class="novels-grid">Loading novels...</div>
+    </div>
+
+    <!-- 2. WRITING TAB -->
+    <div id="writing-tab" class="tab-content">
+      <h2 style="margin-bottom: 15px; color: #00dfd8;">✏️ Writer Studio</h2>
+      <p style="font-size: 13px; color: #b8c1ec; margin-bottom: 20px;">Publish your novel with custom pricing options!</p>
+      
+      <form id="publish-form" onsubmit="publishNovel(event)">
+        <div class="form-group">
+          <label>Novel Title</label>
+          <input type="text" id="novel-title-input" class="form-control" placeholder="e.g. Shadow of the Dragon King" required>
+        </div>
+        <div class="form-group">
+          <label>Author Name</label>
+          <input type="text" id="novel-author-input" class="form-control" placeholder="e.g. Janne" required>
+        </div>
+        <div class="form-group">
+          <label>Genre</label>
+          <input type="text" id="novel-genre-input" class="form-control" placeholder="e.g. Fantasy / Action" required>
+        </div>
+        <div class="form-group">
+          <label>Cover Thumbnail Image URL 🖼️</label>
+          <input type="url" id="novel-cover-input" class="form-control" placeholder="https://example.com/cover.jpg" required>
+        </div>
+        <div class="form-group">
+         <label>Story Content / Chapter 1 Draft ✍️</label>
+         <!-- Quill Editor Container -->
+         <div id="editor-container" style="height: 200px; background: rgba(255,255,255,0.08); border-radius: 10px; color: white;"></div>
+        </div>
+        <div class="form-group">
+          <label>Access Type / Monetization 🪙</label>
+          <select id="novel-access-input" class="form-control">
+            <option value="coin_locked">Coin-Locked (Ch 1-10 Free, Ch 11+ Locked)</option>
+            <option value="free">Free (Ad Supported)</option>
+            <option value="subscription">Subscription Only</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="novel-desc-input" class="form-control" rows="3" placeholder="Brief story outline..." required></textarea>
+        </div>
+        <button type="submit" class="view-btn" style="background: linear-gradient(135deg, #00c6ff, #0072ff); margin-top: 10px;">🚀 Publish Novel</button>
+      </form>
+    </div>
+
+    <!-- 3. SEARCH TAB -->
+    <div id="search-tab" class="tab-content">
+      <h2 style="margin-bottom: 15px; color: #ff007f;">🔍 Search Novels</h2>
+      <input type="text" id="search-input" class="form-control" placeholder="Search by title, author, or genre..." style="margin-bottom: 20px;">
+      <div id="search-results-grid" class="novels-grid"></div>
+    </div>
+
+    <!-- 4. LIBRARY TAB -->
+    <div id="library-tab" class="tab-content">
+      <h2 style="margin-bottom: 15px; color: #f39c12;">📚 My Library</h2>
+      <div style="display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto;">
+        <button class="view-btn library-btn active" onclick="switchLibraryTab('recent', this)">Recent Read</button>
+        <button class="view-btn library-btn" onclick="switchLibraryTab('bookmarks', this)">Bookmarks</button>
+        <button class="view-btn library-btn" onclick="switchLibraryTab('writes', this)">My Writes</button>
+      </div>
+      <div id="library-content-list" class="novels-grid">
+        <p style="color: #b8c1ec; text-align: center;">Loading library...</p>
+      </div>
+    </div>
+
+    <!-- 5. PROFILE & REWARDS TAB -->
+    <div id="profile-tab" class="tab-content">
+      <h2 style="margin-bottom: 15px; color: #7928ca;">👤 Account Profile</h2>
+      <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 16px; margin-bottom: 20px;">
+        <p>Username: <strong id="profile-username" style="color: #00dfd8;">User</strong></p>
+        <p style="margin-top: 8px;">Coins Wallet: 🪙 <strong id="profile-coins">0</strong> Coins</p>
+      </div>
+
+      <h3 style="margin-bottom: 12px; color: #00dfd8;">🎁 Earn Free Coins</h3>
+      <div class="reward-card">
+        <div>
+          <strong style="font-size: 14px;">📺 Watch 2 Ads</strong>
+          <p style="font-size: 11px; color: #b8c1ec;">Get +20 Bonus Coins</p>
+        </div>
+        <button class="reward-btn" onclick="claimReward(20, 'Watch Ads')">Claim +20 🪙</button>
+      </div>
+      <div class="reward-card">
+        <div>
+          <strong style="font-size: 14px;">📖 Share Novel</strong>
+          <p style="font-size: 11px; color: #b8c1ec;">Share story with friends</p>
+        </div>
+        <button class="reward-btn" onclick="claimReward(20, 'Novel Share')">Claim +20 🪙</button>
+      </div>
+
+      <button class="view-btn" onclick="logout()" style="background: linear-gradient(135deg, #ff416c, #ff4b2b); margin-top: 25px;">Logout Account</button>
+    </div>
+
+  </div>
+
+  <!-- Bottom Navigation Bar -->
+  <div class="bottom-nav">
+    <div class="nav-item" data-tab="reading-tab" onclick="switchTab('reading-tab', this)">
+      <span class="icon">📖</span>
+      <span>Read</span>
+    </div>
+    <div class="nav-item" data-tab="search-tab" onclick="switchTab('search-tab', this)">
+      <span class="icon">🔍</span>
+      <span>Search</span>
+    </div>
+    <div class="nav-item" data-tab="writing-tab" onclick="switchTab('writing-tab', this)">
+      <span class="icon">✏️</span>
+      <span>Write</span>
+    </div>
+    <div class="nav-item" data-tab="library-tab" onclick="switchTab('library-tab', this)">
+      <span class="icon">📚</span>
+      <span>Library</span>
+    </div>
+    <div class="nav-item" data-tab="profile-tab" onclick="switchTab('profile-tab', this)">
+      <span class="icon">👤</span>
+      <span>Profile</span>
+    </div>
+  </div>
+
+  <!-- External JavaScript File Link -->
+  <script src="dashboard.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.js"></script>
+    <script>
+      // Initialize Quill Editor
+      const quill = new Quill('#editor-container', {
+        theme: 'snow',
+        placeholder: 'Write your epic story content here...'
+      });
+    </script>
+  </body>
+</html>

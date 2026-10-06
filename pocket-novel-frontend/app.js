@@ -1,91 +1,118 @@
-// Render ka Live API URL
- const BASE_URL = "https://pocket-novel-backend.onrender.com"; 
-
+const BASE_URL = "https://pocket-novel-backend.onrender.com";
 let isLoginMode = true;
 
+// Toggle between Login & Signup
 function toggleForm() {
-    isLoginMode = !isLoginMode;
-    
-    const subTitle = document.getElementById("sub-title");
-    const submitBtn = document.getElementById("submit-btn");
-    const toggleMsg = document.getElementById("toggle-msg");
-    const toggleLink = document.getElementById("toggle-link");
-    const emailGroup = document.getElementById("email-group");
-    const message = document.getElementById("message");
+  isLoginMode = !isLoginMode;
 
-    message.innerText = "";
+  const subTitle = document.getElementById("sub-title");
+  const emailGroup = document.getElementById("email-group");
+  const submitBtn = document.getElementById("submit-btn");
+  const toggleMsg = document.getElementById("toggle-msg");
+  const toggleLink = document.getElementById("toggle-link");
+  const bonusTag = document.getElementById("bonus-tag");
+  const message = document.getElementById("message");
 
-    if (isLoginMode) {
-        subTitle.innerText = "Sign in to read your favorite novels";
-        submitBtn.innerText = "Login";
-        toggleMsg.innerText = "Don't have an account?";
-        toggleLink.innerText = "Sign Up";
-        emailGroup.style.display = "none"; // Hide email field for Login
-    } else {
-        subTitle.innerText = "Create a new account to get started";
-        submitBtn.innerText = "Sign Up";
-        toggleMsg.innerText = "Already have an account?";
-        toggleLink.innerText = "Login";
-        emailGroup.style.display = "block"; // Show email field for Signup
-    }
+  if (message) message.innerText = "";
+
+  if (isLoginMode) {
+    subTitle.innerText = "Sign in to read your favorite novels";
+    emailGroup.style.display = "none";
+    if (bonusTag) bonusTag.style.display = "none";
+    submitBtn.innerText = "Login";
+    toggleMsg.innerText = "Don't have an account?";
+    toggleLink.innerText = "Sign Up";
+  } else {
+    subTitle.innerText = "Create an account to start reading";
+    emailGroup.style.display = "block";
+    if (bonusTag) bonusTag.style.display = "inline-block";
+    submitBtn.innerText = "Sign Up";
+    toggleMsg.innerText = "Already have an account?";
+    toggleLink.innerText = "Login";
+  }
 }
 
+// Handle Login & Signup Submit
 async function handleSubmit() {
-    const username = document.getElementById("username").value.trim();
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value.trim();
-    const message = document.getElementById("message");
+  const usernameInput = document.getElementById("username").value.trim();
+  const passwordInput = document.getElementById("password").value.trim();
+  const emailInput = document.getElementById("email") ? document.getElementById("email").value.trim() : "";
+  const message = document.getElementById("message");
+  const submitBtn = document.getElementById("submit-btn");
 
-    if (!username || !password || (!isLoginMode && !email)) {
-        message.className = "error";
-        message.innerText = "Please fill all required fields!";
-        return;
-    }
+  if (!usernameInput || !passwordInput) {
+    message.className = "error";
+    message.innerText = "Please fill in all required fields!";
+    return;
+  }
 
-    message.className = "";
-    message.innerText = "Connecting to live server...";
+  const endpoint = isLoginMode ? "/login" : "/signup";
+  const payload = isLoginMode 
+    ? { username: usernameInput, password: passwordInput }
+    : { username: usernameInput, email: emailInput, password: passwordInput };
 
-    const endpoint = isLoginMode ? "/login" : "/signup";
-    
-    // Exact schema based on backend FastAPI requirement
-    const payload = isLoginMode 
-        ? { username: username, password: password }
-        : { username: username, email: email, password: password };
+  try {
+    submitBtn.disabled = true;
+    submitBtn.innerText = "Processing...";
 
-    try {
-        const response = await fetch(`${BASE_URL}${endpoint}`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(payload)
-        });
+    const res = await fetch(`${BASE_URL}${endpoint}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
 
-        const data = await response.json();
+    const data = await res.json();
 
-        if (response.ok) {
-            message.className = "success";
-            if (isLoginMode) {
-                message.innerText = "Login Successful! 🎉";
-                if (data.access_token) {
-                    localStorage.setItem("token", data.access_token);
-                }
-            } else {
-                message.innerText = "Account Created Successfully! Please Login now.";
-                toggleForm();
-            }
-        } else {
-            message.className = "error";
-            if (typeof data.detail === "string") {
-                message.innerText = data.detail;
-            } else if (Array.isArray(data.detail)) {
-                message.innerText = data.detail[0]?.msg || "Validation error!";
-            } else {
-                message.innerText = "Invalid credentials or request!";
-            }
+    if (res.ok) {
+      message.className = "success";
+      message.innerText = isLoginMode ? "Login Successful! Redirecting..." : "Account created! 100 Coins credited. Redirecting...";
+
+      // Extract user info correctly for both Login and Signup responses
+      let userInfo = {};
+      if (isLoginMode && data.user_info) {
+        userInfo = {
+          user_id: data.user_info.user_id,
+          username: data.user_info.username,
+          coins: data.user_info.coins,
+          profile_pic: data.user_info.profile_pic
+        };
+        if (data.access_token) {
+          localStorage.setItem("access_token", data.access_token);
         }
-    } catch (error) {
-        message.className = "error";
-        message.innerText = "Server Error or Render is waking up. Try again!";
+      } else {
+        userInfo = {
+          user_id: data.user_id,
+          username: usernameInput,
+          coins: data.coins || 100
+        };
+      }
+
+      localStorage.setItem("user_info", JSON.stringify(userInfo));
+
+      setTimeout(() => {
+        window.location.href = "dashboard.html";
+      }, 1200);
+
+    } else {
+      message.className = "error";
+      message.innerText = data.detail || data.message || "Authentication failed!";
+      submitBtn.disabled = false;
+      submitBtn.innerText = isLoginMode ? "Login" : "Sign Up";
     }
+  } catch (err) {
+    message.className = "error";
+    message.innerText = "Server connection error! Please try again later.";
+    submitBtn.disabled = false;
+    submitBtn.innerText = isLoginMode ? "Login" : "Sign Up";
+  }
 }
+
+// Auto Redirect if User Already Logged In
+document.addEventListener("DOMContentLoaded", () => {
+  const userInfo = localStorage.getItem("user_info");
+  const currentPath = window.location.pathname;
+
+  if (userInfo && (currentPath.endsWith("index.html") || currentPath === "/" || currentPath.endsWith("/"))) {
+    window.location.href = "dashboard.html";
+  }
+});

@@ -1,3 +1,4 @@
+index.html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,13 +10,15 @@
     body { background: #f4f6f8; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
     .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
     h1 { color: #2c3e50; margin-bottom: 8px; }
-    p { color: #7f8c8d; font-size: 14px; margin-bottom: 24px; }
+    p { color: #7f8c8d; font-size: 14px; margin-bottom: 20px; }
+    .bonus-badge { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; border-radius: 20px; padding: 6px 12px; font-size: 12px; font-weight: bold; display: inline-block; margin-bottom: 15px; }
     .input-group { margin-bottom: 15px; text-align: left; }
     label { display: block; font-size: 13px; font-weight: 600; color: #34495e; margin-bottom: 5px; }
     input { width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; outline: none; }
     input:focus { border-color: #3498db; }
-    button { width: 100%; background: #3498db; color: white; border: none; padding: 12px; font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; margin-top: 10px; }
+    button { width: 100%; background: #3498db; color: white; border: none; padding: 12px; font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; margin-top: 10px; transition: background 0.2s; }
     button:hover { background: #2980b9; }
+    button:disabled { background: #bdc3c7; cursor: not-allowed; }
     .switch-text { margin-top: 15px; font-size: 13px; color: #555; }
     .switch-text span { color: #3498db; cursor: pointer; font-weight: bold; }
     #message { margin-top: 15px; font-size: 14px; font-weight: bold; }
@@ -29,9 +32,14 @@
     <h1>📖 Pocket Novel</h1>
     <p id="sub-title">Sign in to read your favorite novels</p>
 
+    <!-- Welcome Bonus Badge -->
+    <div id="bonus-tag" class="bonus-badge" style="display: none;">
+      🎁 Sign up today & get 🪙 100 Free Coins!
+    </div>
+
     <div class="input-group">
       <label for="username">Username</label>
-      <input type="text" id="username" placeholder="enter username">
+      <input type="text" id="username" placeholder="enter username" required>
     </div>
 
     <div class="input-group" id="email-group" style="display: none;">
@@ -41,7 +49,7 @@
 
     <div class="input-group">
       <label for="password">Password</label>
-      <input type="password" id="password" placeholder="enter password">
+      <input type="password" id="password" placeholder="enter password" required>
     </div>
 
     <button id="submit-btn" onclick="handleSubmit()">Login</button>
