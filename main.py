@@ -220,7 +220,6 @@ def get_all_novels(search: Optional[str] = Query(None)):
         cursor.execute("SELECT id, title, author_name, genre, description, access_type, author_id, views FROM novels")
     rows = cursor.fetchall()
     
-    # Get likes and bookmarks count for each novel
     novels_list = []
     for r in rows:
         novel_id = r[0]
@@ -250,7 +249,7 @@ def publish_novel(novel: NovelSchema):
     cursor = conn.cursor()
     cursor.execute('''
         INSERT INTO novels (title, author_name, genre, description, access_type, author_id, views)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 0)
+        VALUES (?, ?, ?, ?, ?, ?, 0)
     ''', (novel.title, novel.author_name, novel.genre, novel.description, novel.access_type, novel.author_id))
     conn.commit()
     novel_id = cursor.lastrowid
@@ -271,7 +270,6 @@ def add_chapter(chapter: ChapterSchema):
     conn = sqlite3.connect("pocket_novel.db")
     cursor = conn.cursor()
 
-    # Chapters 1 to 10 are ALWAYS free, 11+ depend on writer setting or default lock
     if chapter.chapter_number <= 10:
         is_locked = 0
     else:
@@ -291,7 +289,6 @@ def get_novel_chapters(novel_id: int, user_id: int = 0):
     conn = sqlite3.connect("pocket_novel.db")
     cursor = conn.cursor()
     
-    # Increment view count when novel chapters are loaded
     cursor.execute("UPDATE novels SET views = views + 1 WHERE id = ?", (novel_id,))
     conn.commit()
 
@@ -422,7 +419,6 @@ def get_user_library(user_id: int):
     conn = sqlite3.connect("pocket_novel.db")
     cursor = conn.cursor()
     
-    # Recent Reads
     cursor.execute('''
         SELECT n.id, n.title, c.id, c.chapter_number, c.chapter_title, rh.last_read_at
         FROM reading_history rh
@@ -432,7 +428,6 @@ def get_user_library(user_id: int):
     ''', (user_id,))
     recent_rows = cursor.fetchall()
 
-    # Bookmarks
     cursor.execute('''
         SELECT n.id, n.title, n.author_name, n.genre
         FROM bookmarks b
