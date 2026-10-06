@@ -44,7 +44,6 @@ def init_db():
             author_name TEXT,
             genre TEXT,
             description TEXT,
-            cover_image_url TEXT NOT NULL,
             access_type TEXT DEFAULT 'coin_locked',
             author_id INTEGER DEFAULT 0,
             views INTEGER DEFAULT 0
@@ -131,7 +130,6 @@ class NovelSchema(BaseModel):
     author_name: str
     genre: str
     description: Optional[str] = "No description provided."
-    cover_image_url: Optional[str] = "https://via.placeholder.com/150"
     access_type: Optional[str] = "coin_locked" # 'free', 'coin_locked', 'subscription'
     author_id: Optional[int] = 0
 
@@ -217,9 +215,9 @@ def get_all_novels(search: Optional[str] = Query(None)):
     cursor = conn.cursor()
     if search:
         query = "%" + search + "%"
-        cursor.execute("SELECT id, title, author_name, genre, description, cover_image_url, access_type, author_id, views FROM novels WHERE title LIKE ? OR author_name LIKE ? OR genre LIKE ?", (query, query, query))
+        cursor.execute("SELECT id, title, author_name, genre, description, access_type, author_id, views FROM novels WHERE title LIKE ? OR author_name LIKE ? OR genre LIKE ?", (query, query, query))
     else:
-        cursor.execute("SELECT id, title, author_name, genre, description, cover_image_url, access_type, author_id, views FROM novels")
+        cursor.execute("SELECT id, title, author_name, genre, description, access_type, author_id, views FROM novels")
     rows = cursor.fetchall()
     
     # Get likes and bookmarks count for each novel
@@ -237,10 +235,9 @@ def get_all_novels(search: Optional[str] = Query(None)):
             "author_name": r[2],
             "genre": r[3],
             "description": r[4],
-            "cover_image_url": r[5],
-            "access_type": r[6],
-            "author_id": r[7],
-            "views": r[8],
+            "access_type": r[5],
+            "author_id": r[6],
+            "views": r[7],
             "likes_count": likes_count,
             "bookmarks_count": bookmarks_count
         })
@@ -252,9 +249,9 @@ def publish_novel(novel: NovelSchema):
     conn = sqlite3.connect("pocket_novel.db")
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT INTO novels (title, author_name, genre, description, cover_image_url, access_type, author_id, views)
+        INSERT INTO novels (title, author_name, genre, description, access_type, author_id, views)
         VALUES (?, ?, ?, ?, ?, ?, ?, 0)
-    ''', (novel.title, novel.author_name, novel.genre, novel.description, novel.cover_image_url, novel.access_type, novel.author_id))
+    ''', (novel.title, novel.author_name, novel.genre, novel.description, novel.access_type, novel.author_id))
     conn.commit()
     novel_id = cursor.lastrowid
     conn.close()
@@ -264,10 +261,10 @@ def publish_novel(novel: NovelSchema):
 def get_writer_novels(author_id: int):
     conn = sqlite3.connect("pocket_novel.db")
     cursor = conn.cursor()
-    cursor.execute("SELECT id, title, author_name, genre, description, cover_image_url, access_type, views FROM novels WHERE author_id = ?", (author_id,))
+    cursor.execute("SELECT id, title, author_name, genre, description, access_type, views FROM novels WHERE author_id = ?", (author_id,))
     rows = cursor.fetchall()
     conn.close()
-    return {"status": "success", "novels": [{"id": r[0], "title": r[1], "author_name": r[2], "genre": r[3], "description": r[4], "cover_image_url": r[5], "access_type": r[6], "views": r[7]} for r in rows]}
+    return {"status": "success", "novels": [{"id": r[0], "title": r[1], "author_name": r[2], "genre": r[3], "description": r[4], "access_type": r[5], "views": r[6]} for r in rows]}
 
 @app.post("/add-chapter")
 def add_chapter(chapter: ChapterSchema):
@@ -427,7 +424,7 @@ def get_user_library(user_id: int):
     
     # Recent Reads
     cursor.execute('''
-        SELECT n.id, n.title, n.cover_image_url, c.id, c.chapter_number, c.chapter_title, rh.last_read_at
+        SELECT n.id, n.title, c.id, c.chapter_number, c.chapter_title, rh.last_read_at
         FROM reading_history rh
         JOIN novels n ON rh.novel_id = n.id
         JOIN chapters c ON rh.last_chapter_id = c.id
@@ -437,7 +434,7 @@ def get_user_library(user_id: int):
 
     # Bookmarks
     cursor.execute('''
-        SELECT n.id, n.title, n.author_name, n.cover_image_url, n.genre
+        SELECT n.id, n.title, n.author_name, n.genre
         FROM bookmarks b
         JOIN novels n ON b.novel_id = n.id
         WHERE b.user_id = ?
@@ -447,8 +444,8 @@ def get_user_library(user_id: int):
     conn.close()
     return {
         "status": "success",
-        "recent_reads": [{"novel_id": r[0], "novel_title": r[1], "cover_image_url": r[2], "last_chapter_id": r[3], "last_chapter_number": r[4], "last_chapter_title": r[5], "last_read_at": r[6]} for r in recent_rows],
-        "bookmarks": [{"novel_id": r[0], "novel_title": r[1], "author_name": r[2], "cover_image_url": r[3], "genre": r[4]} for r in bookmark_rows]
+        "recent_reads": [{"novel_id": r[0], "novel_title": r[1], "last_chapter_id": r[2], "last_chapter_number": r[3], "last_chapter_title": r[4], "last_read_at": r[5]} for r in recent_rows],
+        "bookmarks": [{"novel_id": r[0], "novel_title": r[1], "author_name": r[2], "genre": r[3]} for r in bookmark_rows]
     }
 
 @app.post("/add-comment")

@@ -80,7 +80,6 @@ function renderNovelsList(novels, container) {
   if (!container) return;
   container.innerHTML = novels.map(novel => `
     <div class="novel-card">
-      <img src="${novel.cover_image_url || 'https://via.placeholder.com/300x400?text=No+Cover'}" class="novel-thumbnail" alt="Cover">
       <div class="novel-details">
         <div class="novel-title">${novel.title}</div>
         <div class="novel-meta">
@@ -147,7 +146,6 @@ async function loadLibraryData(type, btnElement) {
       if (data.novels && data.novels.length > 0) {
         container.innerHTML = data.novels.map(n => `
           <div class="novel-card">
-            <img src="${n.cover_image_url}" class="novel-thumbnail">
             <div class="novel-details">
               <div class="novel-title">${n.title}</div>
               <div class="novel-meta">Views: ${n.views}</div>
@@ -167,7 +165,6 @@ async function loadLibraryData(type, btnElement) {
         if (list.length > 0) {
           container.innerHTML = list.map(item => `
             <div class="novel-card">
-              <img src="${item.cover_image_url}" class="novel-thumbnail">
               <div class="novel-details">
                 <div class="novel-title">${item.novel_title}</div>
                 <div class="novel-meta">Ch ${item.last_chapter_number}: ${item.last_chapter_title}</div>
@@ -183,7 +180,6 @@ async function loadLibraryData(type, btnElement) {
         if (list.length > 0) {
           container.innerHTML = list.map(item => `
             <div class="novel-card">
-              <img src="${item.cover_image_url}" class="novel-thumbnail">
               <div class="novel-details">
                 <div class="novel-title">${item.novel_title}</div>
                 <div class="novel-meta">By ${item.author_name}</div>
@@ -214,7 +210,6 @@ async function publishNovel(e) {
     title: document.getElementById("novel-title-input").value,
     author_name: document.getElementById("novel-author-input").value,
     genre: document.getElementById("novel-genre-input").value,
-    cover_image_url: coverUrl !== "" ? coverUrl : "https://via.placeholder.com/300x400?text=No+Cover",
     access_type: document.getElementById("novel-access-input").value,
     description: document.getElementById("novel-desc-input").value,
     author_id: userInfo.user_id
