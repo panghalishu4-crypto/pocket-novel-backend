@@ -1,6 +1,6 @@
 # Ignore all python files by default
 *.py
-*.db
+#*.db
 
 # Except main.py (Aapki main backend file)
 !main.py
