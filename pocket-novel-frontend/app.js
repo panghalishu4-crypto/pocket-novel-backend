@@ -73,8 +73,7 @@ async function handleSubmit() {
         userInfo = {
           user_id: data.user_info.user_id,
           username: data.user_info.username,
-          coins: data.user_info.coins,
-          profile_pic: data.user_info.profile_pic
+          coins: data.user_info.coins
         };
         if (data.access_token) {
           localStorage.setItem("access_token", data.access_token);
