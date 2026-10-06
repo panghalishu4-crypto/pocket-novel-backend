@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// Load Novel Details (Title, Cover, Description)
+// Load Novel Details (Title, Author, Genre, Description)
 async function loadNovelDetails() {
   try {
     const res = await fetch(`${BASE_URL}/all-novels`);
@@ -28,7 +28,6 @@ async function loadNovelDetails() {
         const authorEl = document.getElementById("novel-author");
         const genreEl = document.getElementById("novel-genre");
         const descEl = document.getElementById("novel-desc");
-        const coverEl = document.getElementById("novel-cover");
 
         if (titleEl) titleEl.innerText = novel.title;
         if (authorEl) authorEl.innerText = `By ${novel.author_name}`;
@@ -82,6 +81,5 @@ async function loadChapterList() {
 }
 
 function openChapter(chapterId) {
-  // Yeh aapko reader page par le jayega jahan chapter khulega
   window.location.href = `reader.html?novel_id=${currentNovelId}&chapter_id=${chapterId}`;
 }
