@@ -108,12 +108,14 @@
       <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.15); margin-bottom: 20px;">
       <div id="reading-content" class="reading-text">Chapter text goes here...</div>
     </div>
+
+    <!-- Comments Section -->
     <div style="margin-top: 40px; background: rgba(255, 255, 255, 0.05); padding: 25px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.1);">
       <h3 style="margin-bottom: 15px; color: #00dfd8;">💬 Chapter Comments</h3>
       
       <div style="display: flex; gap: 10px; margin-bottom: 20px;">
         <input type="text" id="comment-input" class="form-control" placeholder="Share your thoughts on this chapter..." style="flex: 1; padding: 12px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; color: white;">
-        <button onclick="postComment()" class="view-btn" style="width: 120px; background: linear-gradient(135deg, #00dfd8, #0072ff);">Post</button>
+        <button onclick="postComment()" class="view-btn" style="width: 120px; background: linear-gradient(135deg, #00dfd8, #0072ff); border: none; border-radius: 10px; font-weight: 700; cursor: pointer;">Post</button>
       </div>
 
       <div id="comments-list" style="display: flex; flex-direction: column; gap: 12px;">
@@ -269,10 +271,8 @@
     if (novelId) {
       loadChapters();
       
-      // Agar URL me chapter_id bhi hai, toh usko direct open kar do
       const initialChapterId = urlParams.get("chapter_id");
       if (initialChapterId) {
-        // Thoda delay dekar readChapter call karenge taaki chapters list load ho jaye
         setTimeout(() => {
           readChapter(initialChapterId);
         }, 500);
@@ -280,13 +280,12 @@
     } else {
       document.getElementById("chapters-list").innerHTML = "<p>No novel selected!</p>";
     }
-    // Comment post karne ka function
+
     async function postComment() {
       const commentText = document.getElementById("comment-input").value.trim();
       if (!commentText) return alert("Please write something!");
 
       try {
-        // Jab aap backend par comment API bana lenge, tab yahan fetch() lag jayega
         alert("Comment posted successfully!");
         document.getElementById("comment-input").value = "";
       } catch (err) {
