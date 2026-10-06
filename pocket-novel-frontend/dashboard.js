@@ -205,18 +205,21 @@ function switchLibraryTab(type, btn) {
   loadLibraryData(type, btn);
 }
 
-// Publish Novel Form Handler
+// Publish Novel Form Handler (Updated to save Chapter 1 from Quill Editor)
 async function publishNovel(e) {
   e.preventDefault();
+  console.log("🚀 Publish button is click!");
+
   const payload = {
     title: document.getElementById("novel-title-input").value,
     author_name: document.getElementById("novel-author-input").value,
     genre: document.getElementById("novel-genre-input").value,
-    cover_image_url: document.getElementById("novel-cover-input").value,
+    cover_image_url: coverUrl !== "" ? coverUrl : "https://via.placeholder.com/300x400?text=No+Cover",
     access_type: document.getElementById("novel-access-input").value,
     description: document.getElementById("novel-desc-input").value,
     author_id: userInfo.user_id
   };
+  console.log("📦 Payload data:", payload);
 
   try {
     const res = await fetch(`${BASE_URL}/publish-novel`, {
@@ -224,16 +227,43 @@ async function publishNovel(e) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
+    const data = await res.json();
+    console.log("🌐 Server response (/publish-novel):", data);
 
-    if (res.ok) {
-      alert("🎉 Novel Published Successfully!");
-      document.getElementById("publish-form").reset();
-      fetchNovels();
-      switchTab('reading-tab', document.querySelector('.nav-item'));
+    if (res.ok && data.status === "success") {
+      const novelId = data.novel_id;
+
+      const chapterContent = quill ? quill.root.innerHTML : "<p>Chapter 1 Content</p>";
+      const chapterPayload = {
+        novel_id: novelId,
+        chapter_number: 1,
+        chapter_title: "Chapter 1: Beginning",
+        content: chapterContent,
+        is_locked: 0
+      };
+
+      const chRes = await fetch(`${BASE_URL}/add-chapter`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(chapterPayload)
+      });
+      const chData = await chRes.json();
+      console.log("🌐 Server response (/add-chapter):", chData);
+
+      if (chRes.ok && chData.status === "success") {
+        alert("🎉 Novel & Chapter 1 Published Successfully!");
+        document.getElementById("publish-form").reset();
+        if (quill) quill.setContents([]);
+        fetchNovels();
+        switchTab('reading-tab', document.querySelector('.nav-item'));
+      } else {
+        alert("Novel created, but failed to save Chapter 1!");
+      }
     } else {
-      alert("Failed to publish novel!");
+      alert("Failed to publish novel: " + (data.detail || "Unknown error"));
     }
   } catch (err) {
+    console.error("❌ Catch error:", err);
     alert("Server error during publish!");
   }
 }

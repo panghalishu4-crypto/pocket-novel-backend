@@ -219,16 +219,21 @@
         const res = await fetch(`${BASE_URL}/chapter/${chapterId}?user_id=${userInfo.user_id}`);
         const data = await res.json();
 
-        if (res.ok && (data.status === "success" || data.content)) {
+        if (res.ok) {
           const readerBox = document.getElementById("reader-box");
-          document.getElementById("reading-chapter-title").innerText = `Chapter ${data.chapter_number}: ${data.chapter_title}`;
-          document.getElementById("reading-content").innerHTML = (data.content || "").replace(/\n/g, '<br/><br/>');
+          const title = data.chapter_title || data.title || "Chapter";
+          const num = data.chapter_number || "";
+          const content = data.content || data.text || "No content available.";
+
+          document.getElementById("reading-chapter-title").innerText = num ? `Chapter ${num}: ${title}` : title;
+          document.getElementById("reading-content").innerHTML = content.replace(/\n/g, '<br/><br/>');
           readerBox.style.display = "block";
           readerBox.scrollIntoView({ behavior: 'smooth' });
         } else {
           alert(data.detail || data.message || "Unable to load chapter content.");
         }
       } catch (err) {
+        console.error("Read error:", err);
         alert("Failed to read chapter!");
       }
     }
@@ -263,6 +268,15 @@
 
     if (novelId) {
       loadChapters();
+      
+      // Agar URL me chapter_id bhi hai, toh usko direct open kar do
+      const initialChapterId = urlParams.get("chapter_id");
+      if (initialChapterId) {
+        // Thoda delay dekar readChapter call karenge taaki chapters list load ho jaye
+        setTimeout(() => {
+          readChapter(initialChapterId);
+        }, 500);
+      }
     } else {
       document.getElementById("chapters-list").innerHTML = "<p>No novel selected!</p>";
     }

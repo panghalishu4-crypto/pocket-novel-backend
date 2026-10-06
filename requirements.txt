@@ -6,3 +6,4 @@ bcrypt
 pyjwt
 passlib
 python-jose
+python-multipart

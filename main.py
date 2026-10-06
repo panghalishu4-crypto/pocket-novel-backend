@@ -131,7 +131,7 @@ class NovelSchema(BaseModel):
     author_name: str
     genre: str
     description: Optional[str] = "No description provided."
-    cover_image_url: str
+    cover_image_url: Optional[str] = "https://via.placeholder.com/150"
     access_type: Optional[str] = "coin_locked" # 'free', 'coin_locked', 'subscription'
     author_id: Optional[int] = 0
 
