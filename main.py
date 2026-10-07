@@ -110,6 +110,13 @@ def init_db():
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+    try:
+        cursor.execute("ALTER TABLE novels ADD COLUMN views INTEGER DEFAULT 0;")
+        conn.commit()
+    except Exception as e:
+        print("Views column already exists or handled:", e)
+
+    conn.close()
 
     conn.commit()
     conn.close()
